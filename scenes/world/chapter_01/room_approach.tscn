@@ -1,0 +1,61 @@
+[gd_scene load_steps=2 format=3]
+
+;; Room: Approach — Stoneback Shelf
+;; Connecting corridor between Arrival and Foundry. Contains one
+;; AbsorbableObject of each type (basalt slab, driftwood plank).
+;; Optional side alcove with a LorePickup.
+;;
+;; Light source direction: ambient daylight from the left (sea-facing opening).
+;; No artificial lights. CanvasModulate #C4A882.
+
+[ext_resource type="Script" path="res://scripts/components/door_trigger.gd" id="1"]
+
+[node name="RoomApproach" type="Node2D"]
+
+[node name="CanvasModulate" type="CanvasModulate" parent="."]
+color = Color(0.769, 0.659, 0.51, 1.0)
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+
+[node name="FarLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.2, 0.2)
+;; TODO: assign far background
+
+[node name="MidLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.5, 0.5)
+;; TODO: assign mid-ground
+
+[node name="NearLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.8, 0.8)
+;; TODO: assign near foreground
+
+[node name="TerrainTileMap" type="TileMapLayer" parent="."]
+;; TODO: assign TileSet
+
+[node name="DecorationTileMap" type="TileMapLayer" parent="."]
+z_index = 1
+;; TODO: assign decoration TileSet
+
+[node name="Entities" type="Node2D" parent="."]
+y_sort_enabled = true
+;; TODO: place AbsorbableObject (basalt slab) — assign basalt.tres
+;; TODO: place AbsorbableObject (driftwood plank) — assign driftwood.tres
+;; TODO: place LorePickup in side alcove — assign a LoreEntry resource
+
+[node name="DoorToArrival" type="Area2D" parent="."]
+script = ExtResource("1")
+target_room = "arrival"
+target_door_id = "from_approach"
+door_id = "from_arrival"
+
+[node name="DoorToArrivalShape" type="CollisionShape2D" parent="DoorToArrival"]
+;; TODO: assign RectangleShape2D
+
+[node name="DoorToFoundry" type="Area2D" parent="."]
+script = ExtResource("1")
+target_room = "foundry"
+target_door_id = "from_approach"
+door_id = "from_foundry"
+
+[node name="DoorToFoundryShape" type="CollisionShape2D" parent="DoorToFoundry"]
+;; TODO: assign RectangleShape2D

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LoreEntry" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/components/lore_entry.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entry_id = "stoneback_foundry_log"
+title = "Foreman's Tally, Final Entry"
+body_text = "Seals cracked at low tide. We moved the curing racks to the upper shelf but the paste had already set wrong — calcium instead ofite powder, Veld's count, not mine. He measured it six times. I watched him. He wasn't counting the powder. He was counting how many days since the wall came down."
+island_origin = "Stoneback Shelf"

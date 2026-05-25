@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MaterialProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/components/material_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+material_name = "Basalt"
+move_speed = 140.0
+jump_force = 300.0
+gravity_scale = 1.4
+can_wall_climb = true
+can_float = false
+can_walk_underwater = true
+is_flammable = false
+light_reflective = false
+impact_fragile = false
+ambient_color_modulate = Color(0.65, 0.62, 0.58, 1.0)
+sprite_shader_params = {}

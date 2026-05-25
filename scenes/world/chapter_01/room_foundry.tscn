@@ -1,0 +1,435 @@
+[gd_scene load_steps=12 format=3]
+
+;; Room: Foundry — Stoneback Shelf (Full Puzzle Layout)
+;; Puzzle solution order: basalt → driftwood → coral → sea_glass → talk to Veld
+;; Room dimensions: 2400 × 900 pixels (wider than screen, horizontal scrolling)
+
+[ext_resource type="Script" path="res://scripts/world/room_foundry.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/components/door_trigger.gd" id="2_door"]
+[ext_resource type="Script" path="res://scripts/components/absorbable_object.gd" id="3_absorb"]
+[ext_resource type="Script" path="res://scripts/components/water_zone.gd" id="4_water"]
+[ext_resource type="Script" path="res://scripts/components/reflector_target.gd" id="5_reflect"]
+[ext_resource type="Script" path="res://scripts/components/foundry_gate.gd" id="6_gate"]
+[ext_resource type="Resource" path="res://resources/materials/basalt.tres" id="7_basalt"]
+[ext_resource type="Resource" path="res://resources/materials/driftwood.tres" id="8_driftwood"]
+[ext_resource type="Resource" path="res://resources/materials/coral.tres" id="9_coral"]
+[ext_resource type="Resource" path="res://resources/materials/sea_glass.tres" id="10_seaglass"]
+[ext_resource type="Script" path="res://scripts/entities/veld_npc.gd" id="11_veld"]
+
+;; ═══════════════════════════════════════════════════
+;; SUB-RESOURCES (collision shapes)
+;; ═══════════════════════════════════════════════════
+
+[sub_resource type="RectangleShape2D" id="ground_shape"]
+size = Vector2(2400, 40)
+
+[sub_resource type="RectangleShape2D" id="water_shape"]
+size = Vector2(500, 200)
+
+[sub_resource type="RectangleShape2D" id="wall_shape"]
+size = Vector2(20, 400)
+
+[sub_resource type="RectangleShape2D" id="upper_platform_shape"]
+size = Vector2(600, 20)
+
+[sub_resource type="RectangleShape2D" id="mid_platform_shape"]
+size = Vector2(200, 20)
+
+[sub_resource type="RectangleShape2D" id="gate_collision_shape"]
+size = Vector2(20, 200)
+
+[sub_resource type="RectangleShape2D" id="door_shape"]
+size = Vector2(40, 80)
+
+[sub_resource type="RectangleShape2D" id="absorb_shape"]
+size = Vector2(30, 30)
+
+[sub_resource type="RectangleShape2D" id="reflector_target_shape"]
+size = Vector2(40, 40)
+
+[sub_resource type="RectangleShape2D" id="veld_interact_shape"]
+size = Vector2(60, 60)
+
+;; ═══════════════════════════════════════════════════
+;; ROOT NODE
+;; ═══════════════════════════════════════════════════
+
+[node name="RoomFoundry" type="Node2D"]
+script = ExtResource("1_room")
+
+;; ── Canvas Modulate ──────────────────────────────
+[node name="CanvasModulate" type="CanvasModulate" parent="."]
+color = Color(0.769, 0.659, 0.51, 1.0)
+
+;; ── Parallax Background ─────────────────────────
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+
+[node name="FarLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.2, 0.2)
+
+[node name="MidLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.5, 0.5)
+
+[node name="NearLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.8, 0.8)
+
+;; ═══════════════════════════════════════════════════
+;; TERRAIN — Static collision geometry
+;; ═══════════════════════════════════════════════════
+
+[node name="Terrain" type="Node2D" parent="."]
+
+;; Ground floor spanning full room width
+[node name="GroundBody" type="StaticBody2D" parent="Terrain"]
+position = Vector2(1200, 820)
+collision_layer = 1
+
+[node name="GroundShape" type="CollisionShape2D" parent="Terrain/GroundBody"]
+shape = SubResource("ground_shape")
+
+[node name="GroundVisual" type="ColorRect" parent="Terrain/GroundBody"]
+offset_left = -1200
+offset_top = -20
+offset_right = 1200
+offset_bottom = 80
+color = Color(0.35, 0.3, 0.25, 1.0)
+
+;; Wall surface at x=1000 for climbing (Section 2)
+[node name="ClimbWallBody" type="StaticBody2D" parent="Terrain"]
+position = Vector2(1000, 600)
+collision_layer = 1
+
+[node name="ClimbWallShape" type="CollisionShape2D" parent="Terrain/ClimbWallBody"]
+shape = SubResource("wall_shape")
+
+[node name="ClimbWallVisual" type="ColorRect" parent="Terrain/ClimbWallBody"]
+offset_left = -10
+offset_top = -200
+offset_right = 10
+offset_bottom = 200
+color = Color(0.45, 0.4, 0.35, 1.0)
+
+[node name="ClimbWallLabel" type="Label" parent="Terrain/ClimbWallBody"]
+offset_left = -40
+offset_top = -220
+offset_right = 50
+offset_bottom = -200
+text = "CLIMB WALL"
+horizontal_alignment = 1
+
+;; Upper platform (Section 3 — light puzzle area)
+[node name="UpperPlatformBody" type="StaticBody2D" parent="Terrain"]
+position = Vector2(1400, 450)
+collision_layer = 1
+
+[node name="UpperPlatformShape" type="CollisionShape2D" parent="Terrain/UpperPlatformBody"]
+shape = SubResource("upper_platform_shape")
+
+[node name="UpperPlatformVisual" type="ColorRect" parent="Terrain/UpperPlatformBody"]
+offset_left = -300
+offset_top = -10
+offset_right = 300
+offset_bottom = 10
+color = Color(0.4, 0.35, 0.3, 1.0)
+
+[node name="UpperPlatformLabel" type="Label" parent="Terrain/UpperPlatformBody"]
+offset_left = -60
+offset_top = -30
+offset_right = 60
+offset_bottom = -10
+text = "UPPER PLATFORM"
+horizontal_alignment = 1
+
+;; Mid platform near wall (reachable from driftwood float, holds coral)
+[node name="MidPlatformBody" type="StaticBody2D" parent="Terrain"]
+position = Vector2(950, 620)
+collision_layer = 1
+
+[node name="MidPlatformShape" type="CollisionShape2D" parent="Terrain/MidPlatformBody"]
+shape = SubResource("mid_platform_shape")
+
+[node name="MidPlatformVisual" type="ColorRect" parent="Terrain/MidPlatformBody"]
+offset_left = -100
+offset_top = -10
+offset_right = 100
+offset_bottom = 10
+color = Color(0.4, 0.35, 0.3, 1.0)
+
+;; ═══════════════════════════════════════════════════
+;; SECTION 1 — Flooded Floor (WaterZone x=400 to x=900)
+;; ═══════════════════════════════════════════════════
+
+[node name="WaterZone" type="Area2D" parent="."]
+position = Vector2(650, 720)
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("4_water")
+water_depth = 200.0
+
+[node name="WaterShape" type="CollisionShape2D" parent="WaterZone"]
+shape = SubResource("water_shape")
+
+[node name="WaterVisual" type="ColorRect" parent="WaterZone"]
+offset_left = -250
+offset_top = -100
+offset_right = 250
+offset_bottom = 100
+color = Color(0.2, 0.4, 0.6, 0.5)
+
+[node name="WaterLabel" type="Label" parent="WaterZone"]
+offset_left = -40
+offset_top = -20
+offset_right = 40
+offset_bottom = 0
+text = "WATER"
+horizontal_alignment = 1
+
+;; ═══════════════════════════════════════════════════
+;; PUZZLE ELEMENTS
+;; ═══════════════════════════════════════════════════
+
+[node name="PuzzleElements" type="Node2D" parent="."]
+
+;; ── ENTRANCE — AbsorbableObject (basalt) ─────────
+[node name="BasaltObject" type="Area2D" parent="PuzzleElements"]
+position = Vector2(200, 780)
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("3_absorb")
+material_profile = ExtResource("7_basalt")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PuzzleElements/BasaltObject"]
+shape = SubResource("absorb_shape")
+
+[node name="Visual" type="ColorRect" parent="PuzzleElements/BasaltObject"]
+offset_left = -15
+offset_top = -15
+offset_right = 15
+offset_bottom = 15
+color = Color(0.65, 0.62, 0.58, 1.0)
+
+[node name="Label" type="Label" parent="PuzzleElements/BasaltObject"]
+offset_left = -25
+offset_top = -35
+offset_right = 25
+offset_bottom = -15
+text = "BASALT"
+horizontal_alignment = 1
+
+;; ── SECTION 1 EXIT — AbsorbableObject (driftwood) past flood ──
+[node name="DriftwoodObject" type="Area2D" parent="PuzzleElements"]
+position = Vector2(950, 780)
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("3_absorb")
+material_profile = ExtResource("8_driftwood")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PuzzleElements/DriftwoodObject"]
+shape = SubResource("absorb_shape")
+
+[node name="Visual" type="ColorRect" parent="PuzzleElements/DriftwoodObject"]
+offset_left = -15
+offset_top = -15
+offset_right = 15
+offset_bottom = 15
+color = Color(0.82, 0.75, 0.6, 1.0)
+
+[node name="Label" type="Label" parent="PuzzleElements/DriftwoodObject"]
+offset_left = -35
+offset_top = -35
+offset_right = 35
+offset_bottom = -15
+text = "DRIFTWOOD"
+horizontal_alignment = 1
+
+;; ── SECTION 2 — AbsorbableObject (coral) on mid-wall ──
+[node name="CoralObject" type="Area2D" parent="PuzzleElements"]
+position = Vector2(980, 600)
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("3_absorb")
+material_profile = ExtResource("9_coral")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PuzzleElements/CoralObject"]
+shape = SubResource("absorb_shape")
+
+[node name="Visual" type="ColorRect" parent="PuzzleElements/CoralObject"]
+offset_left = -15
+offset_top = -15
+offset_right = 15
+offset_bottom = 15
+color = Color(0.8, 0.5, 0.6, 1.0)
+
+[node name="Label" type="Label" parent="PuzzleElements/CoralObject"]
+offset_left = -25
+offset_top = -35
+offset_right = 25
+offset_bottom = -15
+text = "CORAL"
+horizontal_alignment = 1
+
+;; ── SECTION 3 — AbsorbableObject (sea_glass) on upper platform ──
+[node name="SeaGlassObject" type="Area2D" parent="PuzzleElements"]
+position = Vector2(1300, 400)
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("3_absorb")
+material_profile = ExtResource("10_seaglass")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PuzzleElements/SeaGlassObject"]
+shape = SubResource("absorb_shape")
+
+[node name="Visual" type="ColorRect" parent="PuzzleElements/SeaGlassObject"]
+offset_left = -15
+offset_top = -15
+offset_right = 15
+offset_bottom = 15
+color = Color(0.6, 0.9, 0.85, 1.0)
+
+[node name="Label" type="Label" parent="PuzzleElements/SeaGlassObject"]
+offset_left = -35
+offset_top = -35
+offset_right = 35
+offset_bottom = -15
+text = "SEA GLASS"
+horizontal_alignment = 1
+
+;; ── SECTION 3 — LightSource ─────────────────────
+[node name="LightSource" type="Node2D" parent="PuzzleElements"]
+position = Vector2(1200, 300)
+
+[node name="LightVisual" type="ColorRect" parent="PuzzleElements/LightSource"]
+offset_left = -15
+offset_top = -15
+offset_right = 15
+offset_bottom = 15
+color = Color(1.0, 0.7, 0.28, 1.0)
+
+[node name="LightLabel" type="Label" parent="PuzzleElements/LightSource"]
+offset_left = -30
+offset_top = -35
+offset_right = 30
+offset_bottom = -15
+text = "LIGHT"
+horizontal_alignment = 1
+
+;; ── SECTION 3 — ReflectorTarget → activates FoundryGate ──
+[node name="ReflectorTarget" type="Area2D" parent="PuzzleElements"]
+position = Vector2(1600, 300)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("5_reflect")
+activates = NodePath("../FoundryGate")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PuzzleElements/ReflectorTarget"]
+shape = SubResource("reflector_target_shape")
+
+[node name="Visual" type="ColorRect" parent="PuzzleElements/ReflectorTarget"]
+offset_left = -20
+offset_top = -20
+offset_right = 20
+offset_bottom = 20
+color = Color(0.9, 0.85, 0.3, 1.0)
+
+[node name="Label" type="Label" parent="PuzzleElements/ReflectorTarget"]
+offset_left = -40
+offset_top = -40
+offset_right = 40
+offset_bottom = -20
+text = "REFLECTOR"
+horizontal_alignment = 1
+
+;; ── SECTION 3 — FoundryGate (blocks passage until light puzzle solved) ──
+[node name="FoundryGate" type="Node2D" parent="PuzzleElements"]
+position = Vector2(1550, 700)
+script = ExtResource("6_gate")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="PuzzleElements/FoundryGate"]
+collision_layer = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PuzzleElements/FoundryGate/StaticBody2D"]
+shape = SubResource("gate_collision_shape")
+
+[node name="GateVisual" type="ColorRect" parent="PuzzleElements/FoundryGate"]
+offset_left = -10
+offset_top = -100
+offset_right = 10
+offset_bottom = 100
+color = Color(0.6, 0.2, 0.2, 1.0)
+
+[node name="GateLabel" type="Label" parent="PuzzleElements/FoundryGate"]
+offset_left = -50
+offset_top = -120
+offset_right = 50
+offset_bottom = -100
+text = "GATE [LOCKED]"
+horizontal_alignment = 1
+
+;; ═══════════════════════════════════════════════════
+;; SECTION 4 — Veld NPC
+;; ═══════════════════════════════════════════════════
+
+[node name="Entities" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Veld" type="CharacterBody2D" parent="Entities"]
+position = Vector2(1900, 780)
+collision_layer = 2
+script = ExtResource("11_veld")
+
+[node name="VeldVisual" type="ColorRect" parent="Entities/Veld"]
+offset_left = -16
+offset_top = -48
+offset_right = 16
+offset_bottom = 0
+color = Color(0.3, 0.5, 0.7, 1.0)
+
+[node name="VeldLabel" type="Label" parent="Entities/Veld"]
+offset_left = -20
+offset_top = -68
+offset_right = 20
+offset_bottom = -48
+text = "VELD"
+horizontal_alignment = 1
+
+[node name="InteractRange" type="Area2D" parent="Entities/Veld"]
+collision_layer = 4
+collision_mask = 2
+
+[node name="InteractShape" type="CollisionShape2D" parent="Entities/Veld/InteractRange"]
+shape = SubResource("veld_interact_shape")
+
+;; ═══════════════════════════════════════════════════
+;; DOORS
+;; ═══════════════════════════════════════════════════
+
+[node name="DoorToPrevious" type="Area2D" parent="."]
+position = Vector2(100, 760)
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("2_door")
+target_room = "arrival"
+target_door_id = "from_foundry"
+door_id = "from_approach"
+
+[node name="DoorShape" type="CollisionShape2D" parent="DoorToPrevious"]
+shape = SubResource("door_shape")
+
+[node name="DoorVisual" type="ColorRect" parent="DoorToPrevious"]
+offset_left = -20
+offset_top = -40
+offset_right = 20
+offset_bottom = 40
+color = Color(0.2, 0.6, 0.3, 0.6)
+
+[node name="DoorLabel" type="Label" parent="DoorToPrevious"]
+offset_left = -30
+offset_top = -60
+offset_right = 30
+offset_bottom = -40
+text = "EXIT"
+horizontal_alignment = 1
+
+;; ── LightSource group membership (set via script in _ready or manually) ──
+;; Note: LightSource node must be added to "light_source" group.
+;; This is handled in the scene script or via editor metadata.

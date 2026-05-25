@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MaterialProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/components/material_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+material_name = "Coral"
+move_speed = 160.0
+jump_force = 280.0
+gravity_scale = 1.0
+can_wall_climb = true
+can_float = false
+can_walk_underwater = false
+is_flammable = false
+light_reflective = false
+impact_fragile = true
+ambient_color_modulate = Color(0.8, 0.5, 0.6, 1.0)
+sprite_shader_params = {}

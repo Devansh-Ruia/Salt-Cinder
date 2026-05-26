@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://bjobf1ixhsvuj" path="res://scenes/entities/embe/embe.tscn" id="2_kbhdu"]
 [ext_resource type="Script" uid="uid://ctwjlak76j6w6" path="res://scripts/components/absorbable_object.gd" id="3_hsw0s"]
 [ext_resource type="Resource" path="res://resources/materials/driftwood.tres" id="4_0kpwh"]
+[ext_resource type="Script" uid="uid://waterzone" path="res://scripts/components/water_zone.gd" id="5_waterzone"]
+[ext_resource type="Script" uid="uid://completiontrigger" path="res://scripts/components/completion_trigger.gd" id="6_completiontrigger"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lcsfq"]
 texture = ExtResource("1_47nsp")
@@ -205,3 +207,30 @@ door_id = "from_approach"
 [node name="DoorToApproachShape" type="CollisionShape2D" parent="DoorToApproach" unique_id=1763344987]
 position = Vector2(-31, -32)
 shape = SubResource("RectangleShape2D_83tn4")
+
+[node name="WaterZone" type="Area2D" parent="." unique_id=1274222405]
+script = ExtResource("5_waterzone")
+position = Vector2(100, 0)
+size = Vector2(80, 40)
+
+[node name="WaterZoneShape" type="RectangleShape2D" parent="WaterZone" unique_id=1274222406]
+size = Vector2(80, 40)
+
+[node name="BasaltObstacle" type="Area2D" parent="." unique_id=1274222407]
+script = ExtResource("1")
+position = Vector2(180, -20)
+size = Vector2(40, 60)
+collision_layer = 1
+collision_mask = 2
+
+[node name="BasaltObstacleShape" type="RectangleShape2D" parent="BasaltObstacle" unique_id=1274222408]
+size = Vector2(40, 60)
+
+[node name="CompletionTrigger" type="Area2D" parent="." unique_id=1274222409]
+script = ExtResource("6_completiontrigger")
+position = Vector2(250, -30)
+flag_to_set = "chapter_01_greybox_complete"
+
+[node name="CompletionTriggerShape" type="RectangleShape2D" parent="CompletionTrigger" unique_id=1274222410]
+size = Vector2(32, 32)
+

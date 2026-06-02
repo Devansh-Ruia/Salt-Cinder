@@ -2,6 +2,7 @@
 ## Styled like a tide-worn document: bone-white panel, ink-black text,
 ## no rounded corners, no drop shadow.
 ## Typewriter effect at 30 chars/sec. Skip on first interact press; advance on second.
+class_name DialogueBox
 extends PanelContainer
 
 ## Typewriter speed in characters per second.

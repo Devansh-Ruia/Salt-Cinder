@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://cjy33d2ifnfer" path="res://scripts/components/absorption_component.gd" id="2"]
 [ext_resource type="Texture2D" uid="uid://4q335xxs2p" path="res://icon.svg" id="2_85000"]
 [ext_resource type="Resource" path="res://resources/materials/basalt.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/components/light_reflector.gd" id="4"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_tpe8y"]
 animations = [{
@@ -40,3 +41,6 @@ default_profile = ExtResource("3")
 zoom = Vector2(2, 2)
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
+
+[node name="LightReflector" type="Node2D" parent="."]
+script = ExtResource("4")

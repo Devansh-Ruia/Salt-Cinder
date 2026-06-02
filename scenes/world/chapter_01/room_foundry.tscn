@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=11 format=3]
 
 ;; Room: Foundry — Stoneback Shelf (Full Puzzle Layout)
 ;; Puzzle solution order: basalt → driftwood → coral → sea_glass → talk to Veld
@@ -14,7 +14,7 @@
 [ext_resource type="Resource" path="res://resources/materials/driftwood.tres" id="8_driftwood"]
 [ext_resource type="Resource" path="res://resources/materials/coral.tres" id="9_coral"]
 [ext_resource type="Resource" path="res://resources/materials/sea_glass.tres" id="10_seaglass"]
-[ext_resource type="Script" path="res://scripts/entities/veld_npc.gd" id="11_veld"]
+[ext_resource type="PackedScene" path="res://scenes/entities/npcs/veld.tscn" id="11_veld"]
 
 ;; ═══════════════════════════════════════════════════
 ;; SUB-RESOURCES (collision shapes)
@@ -46,9 +46,6 @@ size = Vector2(30, 30)
 
 [sub_resource type="RectangleShape2D" id="reflector_target_shape"]
 size = Vector2(40, 40)
-
-[sub_resource type="RectangleShape2D" id="veld_interact_shape"]
-size = Vector2(60, 60)
 
 ;; ═══════════════════════════════════════════════════
 ;; ROOT NODE
@@ -372,32 +369,8 @@ horizontal_alignment = 1
 [node name="Entities" type="Node2D" parent="."]
 y_sort_enabled = true
 
-[node name="Veld" type="CharacterBody2D" parent="Entities"]
+[node name="Veld" parent="Entities" instance=ExtResource("11_veld")]
 position = Vector2(1900, 780)
-collision_layer = 2
-script = ExtResource("11_veld")
-
-[node name="VeldVisual" type="ColorRect" parent="Entities/Veld"]
-offset_left = -16
-offset_top = -48
-offset_right = 16
-offset_bottom = 0
-color = Color(0.3, 0.5, 0.7, 1.0)
-
-[node name="VeldLabel" type="Label" parent="Entities/Veld"]
-offset_left = -20
-offset_top = -68
-offset_right = 20
-offset_bottom = -48
-text = "VELD"
-horizontal_alignment = 1
-
-[node name="InteractRange" type="Area2D" parent="Entities/Veld"]
-collision_layer = 4
-collision_mask = 2
-
-[node name="InteractShape" type="CollisionShape2D" parent="Entities/Veld/InteractRange"]
-shape = SubResource("veld_interact_shape")
 
 ;; ═══════════════════════════════════════════════════
 ;; DOORS

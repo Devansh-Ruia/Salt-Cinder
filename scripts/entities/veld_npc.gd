@@ -3,6 +3,10 @@
 ## during dialogue, idle otherwise.
 extends CharacterBody2D
 
+## Veld's Chapter 1 dialogue is authored in code (nested resource arrays are
+## painful as .tres), so we build it at runtime rather than via an @export .tres.
+const DIALOGUE_BOX_SCENE: PackedScene = preload("res://scenes/ui/dialogue_box.tscn")
+
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var interact_range: Area2D = $InteractRange
 @onready var dialogue_runner: DialogueRunner = $DialogueRunner
@@ -15,6 +19,21 @@ func _ready() -> void:
 	interact_range.body_exited.connect(_on_body_exited)
 	dialogue_runner.dialogue_started.connect(_on_dialogue_started)
 	dialogue_runner.dialogue_ended.connect(_on_dialogue_ended)
+
+	# Build Veld's dialogue in code and hand it to the runner.
+	dialogue_runner.dialogue = VeldCh1Data.build()
+
+	# Instance the dialogue UI on its own CanvasLayer (screen-fixed) and bind it
+	# to this NPC's runner. UI is instanced via code by project convention.
+	var ui_layer := CanvasLayer.new()
+	ui_layer.name = "DialogueUILayer"
+	add_child(ui_layer)
+	# Untyped on purpose: DialogueBox's class_name is only registered after an
+	# editor import, and the Node-inferred type lacks bind_to_runner — either
+	# would fail a headless parse. Dynamic dispatch resolves it at runtime.
+	var box = DIALOGUE_BOX_SCENE.instantiate()
+	ui_layer.add_child(box)
+	box.bind_to_runner(dialogue_runner)
 
 	# TODO: play idle animation when sprite is set up
 	# sprite.play("idle")

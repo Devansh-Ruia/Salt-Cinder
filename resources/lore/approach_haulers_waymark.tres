@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LoreEntry" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/components/lore_entry.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entry_id = "approach_haulers_waymark"
+title = "Hauler's Waymark"
+body_text = "Scratched into the cairn at the bend: a row of tally-strokes, then a name worn too smooth to read. Whoever walked this haulway counted every trip out to the foundry and every trip back. The last stroke is half-cut, as if the count stopped mid-step."
+island_origin = "Stoneback Shelf"

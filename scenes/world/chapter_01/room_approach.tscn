@@ -1,61 +1,302 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=14 format=3]
 
 ;; Room: Approach — Stoneback Shelf
-;; Connecting corridor between Arrival and Foundry. Contains one
-;; AbsorbableObject of each type (basalt slab, driftwood plank).
-;; Optional side alcove with a LorePickup.
+;; The haulway connecting Arrival (sea cove) and the Foundry. A low-stakes
+;; practice corridor: one AbsorbableObject of each form (basalt, driftwood,
+;; coral, sea glass) lines the path so the player rehearses absorb/release
+;; before the Foundry puzzle. One optional lore alcove (a hauler's cairn).
 ;;
-;; Light source direction: ambient daylight from the left (sea-facing opening).
-;; No artificial lights. CanvasModulate #C4A882.
+;; Primary light source: ambient daylight from the sea-facing opening on the
+;; LEFT. Light travels left → right; shadows fall to the RIGHT. No artificial
+;; lights. CanvasModulate #C4A882 (warm overcast stone, matches the chapter).
+;;
+;; Greyboxed with StaticBody2D + ColorRect (same convention as room_foundry);
+;; tilesets/sprites are the separate art gate and are intentionally absent.
+;;
+;; Every prop is motivated (who was here / what they left):
+;;   - Basalt slab   : a chunk of fallen ceiling — Embe's own native stone.
+;;   - Driftwood plank: a board off the workers' old tide-walkway.
+;;   - Coral chunk    : tide-pool coral hauled up to feed the lime kilns.
+;;   - Sea-glass shard: smoothed bottle-glass, a hauler's discard left to mark the bend.
+;;   - Cairn waymark  : the tally-stone a hauler scratched on every trip.
 
-[ext_resource type="Script" path="res://scripts/components/door_trigger.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/world/room_approach.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/components/door_trigger.gd" id="2_door"]
+[ext_resource type="Script" path="res://scripts/components/absorbable_object.gd" id="3_absorb"]
+[ext_resource type="Script" path="res://scripts/components/lore_pickup.gd" id="4_lore"]
+[ext_resource type="Resource" path="res://resources/lore/approach_haulers_waymark.tres" id="5_loredata"]
+[ext_resource type="Resource" path="res://resources/materials/basalt.tres" id="6_basalt"]
+[ext_resource type="Resource" path="res://resources/materials/driftwood.tres" id="7_driftwood"]
+[ext_resource type="Resource" path="res://resources/materials/coral.tres" id="8_coral"]
+[ext_resource type="Resource" path="res://resources/materials/sea_glass.tres" id="9_seaglass"]
+
+[sub_resource type="RectangleShape2D" id="ground_shape"]
+size = Vector2(1600, 40)
+
+[sub_resource type="RectangleShape2D" id="door_shape"]
+size = Vector2(40, 80)
+
+[sub_resource type="RectangleShape2D" id="absorb_shape"]
+size = Vector2(30, 30)
+
+[sub_resource type="RectangleShape2D" id="lore_shape"]
+size = Vector2(32, 40)
+
+;; ═══════════════════════════════════════════════════
+;; ROOT
+;; ═══════════════════════════════════════════════════
 
 [node name="RoomApproach" type="Node2D"]
+script = ExtResource("1_room")
 
 [node name="CanvasModulate" type="CanvasModulate" parent="."]
 color = Color(0.769, 0.659, 0.51, 1.0)
 
+;; ── Parallax Background ─────────────────────────────
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
 
 [node name="FarLayer" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.2, 0.2)
-;; TODO: assign far background
 
 [node name="MidLayer" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.5, 0.5)
-;; TODO: assign mid-ground
 
 [node name="NearLayer" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.8, 0.8)
-;; TODO: assign near foreground
 
-[node name="TerrainTileMap" type="TileMapLayer" parent="."]
-;; TODO: assign TileSet
+;; ═══════════════════════════════════════════════════
+;; TERRAIN — greybox collision geometry
+;; ═══════════════════════════════════════════════════
 
-[node name="DecorationTileMap" type="TileMapLayer" parent="."]
-z_index = 1
-;; TODO: assign decoration TileSet
+[node name="Terrain" type="Node2D" parent="."]
+
+;; Ground floor spanning the corridor (top edge at y=420)
+[node name="GroundBody" type="StaticBody2D" parent="Terrain"]
+position = Vector2(760, 440)
+collision_layer = 1
+
+[node name="GroundShape" type="CollisionShape2D" parent="Terrain/GroundBody"]
+shape = SubResource("ground_shape")
+
+[node name="GroundVisual" type="ColorRect" parent="Terrain/GroundBody"]
+offset_left = -800.0
+offset_top = -20.0
+offset_right = 800.0
+offset_bottom = 60.0
+color = Color(0.35, 0.3, 0.25, 1.0)
+
+;; Cairn nook backdrop at the bend — frames the lore waymark (decorative)
+[node name="CairnNookVisual" type="ColorRect" parent="Terrain"]
+offset_left = 1248.0
+offset_top = 350.0
+offset_right = 1312.0
+offset_bottom = 420.0
+color = Color(0.3, 0.27, 0.24, 1.0)
+
+;; ═══════════════════════════════════════════════════
+;; ENTITIES — AbsorbableObjects (practice forms)
+;; ═══════════════════════════════════════════════════
 
 [node name="Entities" type="Node2D" parent="."]
 y_sort_enabled = true
-;; TODO: place AbsorbableObject (basalt slab) — assign basalt.tres
-;; TODO: place AbsorbableObject (driftwood plank) — assign driftwood.tres
-;; TODO: place LorePickup in side alcove — assign a LoreEntry resource
 
+;; ── Basalt slab (fallen ceiling chunk — Embe's native stone) ──
+[node name="BasaltSlab" type="Node2D" parent="Entities"]
+position = Vector2(320, 400)
+
+[node name="AbsorbableObject" type="Area2D" parent="Entities/BasaltSlab"]
+collision_layer = 4
+collision_mask = 6
+script = ExtResource("3_absorb")
+material_profile = ExtResource("6_basalt")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/BasaltSlab/AbsorbableObject"]
+shape = SubResource("absorb_shape")
+
+[node name="Visual" type="ColorRect" parent="Entities/BasaltSlab/AbsorbableObject"]
+offset_left = -15.0
+offset_top = -15.0
+offset_right = 15.0
+offset_bottom = 15.0
+color = Color(0.65, 0.62, 0.58, 1.0)
+
+[node name="Label" type="Label" parent="Entities/BasaltSlab/AbsorbableObject"]
+offset_left = -25.0
+offset_top = -35.0
+offset_right = 25.0
+offset_bottom = -15.0
+text = "BASALT"
+horizontal_alignment = 1
+
+;; ── Driftwood plank (board off the workers' tide-walkway) ──
+[node name="DriftwoodPlank" type="Node2D" parent="Entities"]
+position = Vector2(560, 400)
+
+[node name="AbsorbableObject" type="Area2D" parent="Entities/DriftwoodPlank"]
+collision_layer = 4
+collision_mask = 6
+script = ExtResource("3_absorb")
+material_profile = ExtResource("7_driftwood")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/DriftwoodPlank/AbsorbableObject"]
+shape = SubResource("absorb_shape")
+
+[node name="Visual" type="ColorRect" parent="Entities/DriftwoodPlank/AbsorbableObject"]
+offset_left = -15.0
+offset_top = -15.0
+offset_right = 15.0
+offset_bottom = 15.0
+color = Color(0.82, 0.75, 0.6, 1.0)
+
+[node name="Label" type="Label" parent="Entities/DriftwoodPlank/AbsorbableObject"]
+offset_left = -35.0
+offset_top = -35.0
+offset_right = 35.0
+offset_bottom = -15.0
+text = "DRIFTWOOD"
+horizontal_alignment = 1
+
+;; ── Coral chunk (tide-pool coral hauled up for the lime kilns) ──
+[node name="CoralChunk" type="Node2D" parent="Entities"]
+position = Vector2(800, 400)
+
+[node name="AbsorbableObject" type="Area2D" parent="Entities/CoralChunk"]
+collision_layer = 4
+collision_mask = 6
+script = ExtResource("3_absorb")
+material_profile = ExtResource("8_coral")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/CoralChunk/AbsorbableObject"]
+shape = SubResource("absorb_shape")
+
+[node name="Visual" type="ColorRect" parent="Entities/CoralChunk/AbsorbableObject"]
+offset_left = -15.0
+offset_top = -15.0
+offset_right = 15.0
+offset_bottom = 15.0
+color = Color(0.8, 0.5, 0.6, 1.0)
+
+[node name="Label" type="Label" parent="Entities/CoralChunk/AbsorbableObject"]
+offset_left = -25.0
+offset_top = -35.0
+offset_right = 25.0
+offset_bottom = -15.0
+text = "CORAL"
+horizontal_alignment = 1
+
+;; ── Sea-glass shard (smoothed bottle-glass marking the bend) ──
+[node name="SeaGlassShard" type="Node2D" parent="Entities"]
+position = Vector2(1040, 400)
+
+[node name="AbsorbableObject" type="Area2D" parent="Entities/SeaGlassShard"]
+collision_layer = 4
+collision_mask = 6
+script = ExtResource("3_absorb")
+material_profile = ExtResource("9_seaglass")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/SeaGlassShard/AbsorbableObject"]
+shape = SubResource("absorb_shape")
+
+[node name="Visual" type="ColorRect" parent="Entities/SeaGlassShard/AbsorbableObject"]
+offset_left = -15.0
+offset_top = -15.0
+offset_right = 15.0
+offset_bottom = 15.0
+color = Color(0.6, 0.9, 0.85, 1.0)
+
+[node name="Label" type="Label" parent="Entities/SeaGlassShard/AbsorbableObject"]
+offset_left = -35.0
+offset_top = -35.0
+offset_right = 35.0
+offset_bottom = -15.0
+text = "SEA GLASS"
+horizontal_alignment = 1
+
+;; ═══════════════════════════════════════════════════
+;; LORE — hauler's cairn waymark (optional alcove)
+;; ═══════════════════════════════════════════════════
+
+[node name="LoreWaymark" type="Area2D" parent="."]
+position = Vector2(1280, 390)
+collision_layer = 4
+collision_mask = 6
+script = ExtResource("4_lore")
+lore_entry = ExtResource("5_loredata")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LoreWaymark"]
+shape = SubResource("lore_shape")
+
+[node name="Visual" type="ColorRect" parent="LoreWaymark"]
+offset_left = -16.0
+offset_top = -20.0
+offset_right = 16.0
+offset_bottom = 20.0
+color = Color(0.55, 0.52, 0.48, 1.0)
+
+[node name="Label" type="Label" parent="LoreWaymark"]
+offset_left = -30.0
+offset_top = -42.0
+offset_right = 30.0
+offset_bottom = -22.0
+text = "CAIRN"
+horizontal_alignment = 1
+
+;; ═══════════════════════════════════════════════════
+;; DOORS — direct children of root (RoomManager scans root for get_door_id)
+;; ═══════════════════════════════════════════════════
+
+;; ── Back to Arrival (left) ──
 [node name="DoorToArrival" type="Area2D" parent="."]
-script = ExtResource("1")
+position = Vector2(60, 380)
+collision_layer = 3
+collision_mask = 6
+script = ExtResource("2_door")
 target_room = "arrival"
 target_door_id = "from_approach"
 door_id = "from_arrival"
 
 [node name="DoorToArrivalShape" type="CollisionShape2D" parent="DoorToArrival"]
-;; TODO: assign RectangleShape2D
+shape = SubResource("door_shape")
 
+[node name="Visual" type="ColorRect" parent="DoorToArrival"]
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+offset_bottom = 40.0
+color = Color(0.2, 0.6, 0.3, 0.6)
+
+[node name="Label" type="Label" parent="DoorToArrival"]
+offset_left = -40.0
+offset_top = -60.0
+offset_right = 40.0
+offset_bottom = -40.0
+text = "< ARRIVAL"
+horizontal_alignment = 1
+
+;; ── Forward to Foundry (right) ──
 [node name="DoorToFoundry" type="Area2D" parent="."]
-script = ExtResource("1")
+position = Vector2(1460, 380)
+collision_layer = 3
+collision_mask = 6
+script = ExtResource("2_door")
 target_room = "foundry"
 target_door_id = "from_approach"
 door_id = "from_foundry"
 
 [node name="DoorToFoundryShape" type="CollisionShape2D" parent="DoorToFoundry"]
-;; TODO: assign RectangleShape2D
+shape = SubResource("door_shape")
+
+[node name="Visual" type="ColorRect" parent="DoorToFoundry"]
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+offset_bottom = 40.0
+color = Color(0.2, 0.6, 0.3, 0.6)
+
+[node name="Label" type="Label" parent="DoorToFoundry"]
+offset_left = -40.0
+offset_top = -60.0
+offset_right = 40.0
+offset_bottom = -40.0
+text = "FOUNDRY >"
+horizontal_alignment = 1

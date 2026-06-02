@@ -408,7 +408,7 @@ position = Vector2(100, 760)
 collision_layer = 4
 collision_mask = 2
 script = ExtResource("2_door")
-target_room = "arrival"
+target_room = "approach"
 target_door_id = "from_foundry"
 door_id = "from_approach"
 

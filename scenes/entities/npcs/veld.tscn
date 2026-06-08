@@ -1,30 +1,40 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://cvaxrwcyc8d7x"]
 
-[ext_resource type="Script" path="res://scripts/entities/veld_npc.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/components/dialogue_runner.gd" id="2"]
+[ext_resource type="Script" uid="uid://dds8u2tyb47nl" path="res://scripts/entities/veld_npc.gd" id="1"]
+[ext_resource type="Script" uid="uid://cjf7ymlchedeo" path="res://scripts/components/dialogue_runner.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://4q335xxs2p" path="res://icon.svg" id="2_cpqdv"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_wyg1p"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_cpqdv")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
 
 [sub_resource type="RectangleShape2D" id="veld_body_shape"]
-size = Vector2(32, 48)
+size = Vector2(120, 116)
 
 [sub_resource type="CircleShape2D" id="veld_interact_shape"]
-radius = 48.0
+radius = 55.03635
 
-[node name="Veld" type="CharacterBody2D"]
+[node name="Veld" type="CharacterBody2D" unique_id=1987501701]
 collision_layer = 2
 script = ExtResource("1")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-;; TODO: assign SpriteFrames with animations: idle (4 frames), talking (6 frames)
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1448165270]
+sprite_frames = SubResource("SpriteFrames_wyg1p")
 
-;; ── Greybox placeholder (until SpriteFrames are authored) ──
-[node name="VeldVisual" type="ColorRect" parent="."]
+[node name="VeldVisual" type="ColorRect" parent="." unique_id=1922826140]
 offset_left = -16.0
 offset_top = -48.0
 offset_right = 16.0
-offset_bottom = 0.0
-color = Color(0.3, 0.5, 0.7, 1.0)
+color = Color(0.3, 0.5, 0.7, 1)
 
-[node name="VeldLabel" type="Label" parent="."]
+[node name="VeldLabel" type="Label" parent="." unique_id=2038630638]
 offset_left = -20.0
 offset_top = -68.0
 offset_right = 20.0
@@ -32,18 +42,17 @@ offset_bottom = -48.0
 text = "VELD"
 horizontal_alignment = 1
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -24)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2081704049]
+position = Vector2(0, -3)
 shape = SubResource("veld_body_shape")
 
-[node name="InteractRange" type="Area2D" parent="."]
+[node name="InteractRange" type="Area2D" parent="." unique_id=487311269]
 collision_layer = 4
 collision_mask = 2
 
-[node name="InteractRangeShape" type="CollisionShape2D" parent="InteractRange"]
-position = Vector2(0, -24)
+[node name="InteractRangeShape" type="CollisionShape2D" parent="InteractRange" unique_id=1664751002]
+position = Vector2(1, 0)
 shape = SubResource("veld_interact_shape")
 
-[node name="DialogueRunner" type="Node" parent="."]
+[node name="DialogueRunner" type="Node" parent="." unique_id=1312149703]
 script = ExtResource("2")
-;; dialogue is assigned at runtime in veld_npc.gd via VeldCh1Data.build()

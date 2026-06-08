@@ -6,6 +6,12 @@ extends Area2D
 ## Emitted when the player collects this lore entry. UI listens for notification.
 signal lore_collected(entry: LoreEntry)
 
+## Emitted when Embe enters interaction range (carries self). The teaching layer
+## hooks the [E] lore glyph onto this.
+signal embe_entered_range(pickup: Node)
+## Emitted when Embe leaves interaction range (carries self).
+signal embe_exited_range(pickup: Node)
+
 ## The lore entry this pickup grants.
 @export var lore_entry: LoreEntry
 
@@ -15,6 +21,7 @@ var _embe_in_range: bool = false
 
 func _ready() -> void:
 	assert(lore_entry != null, "LorePickup: lore_entry must be assigned.")
+	add_to_group("lore_pickup")
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 
@@ -49,8 +56,12 @@ func _set_collected_visual() -> void:
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("embe"):
 		_embe_in_range = true
+		# Only flag an uncollected pickup as readable; collected ones stay inert.
+		if not _collected:
+			embe_entered_range.emit(self)
 
 
 func _on_body_exited(body: Node) -> void:
 	if body.is_in_group("embe"):
 		_embe_in_range = false
+		embe_exited_range.emit(self)

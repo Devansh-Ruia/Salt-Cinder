@@ -47,6 +47,18 @@
 ## ──────────────────────────────────────────────────────────
 extends CharacterBody2D
 
+## Emitted when an AbsorbableObject enters interaction range (carries the object).
+## The teaching layer hooks the [Q] absorb glyph onto this.
+signal absorbable_in_range(obj: Node)
+## Emitted when the nearby AbsorbableObject leaves range.
+signal absorbable_out_of_range
+## Emitted when Embe's wall-contact state changes (true = now touching a wall).
+## Drives the data-driven climb affordance glyph.
+signal wall_contact_changed(touching: bool)
+## Emitted whenever Embe performs a jump (ground jump or wall-kick).
+## Retires the opening move/jump teaching glyphs.
+signal jumped
+
 enum State {
 	IDLE,
 	RUNNING,
@@ -88,6 +100,9 @@ var _pre_land_velocity_y: float = 0.0
 ## Closest absorbable object in range, or null.
 var _nearby_absorbable: Node = null
 
+## Previous wall-contact state, used to emit wall_contact_changed only on edges.
+var _on_wall_prev: bool = false
+
 ## Reference to the WaterZone Embe is currently inside, or null.
 var _active_water_zone: WaterZone = null
 
@@ -112,6 +127,16 @@ func _physics_process(delta: float) -> void:
 	_handle_state(delta, profile)
 	_update_animation(profile)
 	move_and_slide()
+	_update_wall_contact()
+
+
+## Emit wall_contact_changed only when the contact state flips (edge-triggered),
+## so the teaching layer can react without polling.
+func _update_wall_contact() -> void:
+	var touching: bool = is_on_wall()
+	if touching != _on_wall_prev:
+		_on_wall_prev = touching
+		wall_contact_changed.emit(touching)
 
 
 # ── Gravity ──────────────────────────────────────────────
@@ -317,6 +342,7 @@ func _state_wall_climbing(profile: MaterialProfile) -> void:
 		var kick_speed := profile.jump_force
 		velocity.x = kick_dir.x * kick_speed * 0.707  # cos(45)
 		velocity.y = -kick_speed * 0.707               # sin(45) upward
+		jumped.emit()
 		_transition_to(State.JUMPING)
 
 
@@ -338,6 +364,7 @@ func _flip_sprite(direction: float) -> void:
 
 func _jump(profile: MaterialProfile) -> void:
 	velocity.y = -profile.jump_force
+	jumped.emit()
 	_transition_to(State.JUMPING)
 
 
@@ -411,11 +438,13 @@ func set_in_water(in_water: bool, water_zone: WaterZone = null) -> void:
 ## Called by AbsorbableObject when Embe enters/exits its interaction range.
 func set_nearby_absorbable(obj: Node) -> void:
 	_nearby_absorbable = obj
+	absorbable_in_range.emit(obj)
 
 
 func clear_nearby_absorbable(obj: Node) -> void:
 	if _nearby_absorbable == obj:
 		_nearby_absorbable = null
+		absorbable_out_of_range.emit()
 		
 func _change_state(new_state: State) -> void:
 	print("[Embe] State: ", State.keys()[_state], " → ", State.keys()[new_state])

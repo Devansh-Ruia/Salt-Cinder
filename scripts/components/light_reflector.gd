@@ -4,6 +4,13 @@
 class_name LightReflector
 extends Node2D
 
+## Emitted when a reflectable target comes into / leaves the ray's sight while
+## the reflective form is active. Drives the data-driven reflect affordance glyph.
+signal reflect_target_changed(available: bool)
+
+## Last emitted availability, so reflect_target_changed only fires on edges.
+var _target_available_emitted: bool = false
+
 ## Time Embe must remain stationary before the reflection is considered stable.
 const STABILITY_TIME: float = 0.5
 
@@ -29,6 +36,9 @@ var _current_target: Node = null
 
 
 func _ready() -> void:
+	# Located by the teaching layer via group, not a node path.
+	add_to_group("light_reflector")
+
 	# Create the RayCast2D programmatically
 	_ray = RayCast2D.new()
 	_ray.enabled = false
@@ -43,6 +53,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not _active:
+		_set_target_available(false)
 		return
 
 	var parent_body := get_parent() as Node2D
@@ -53,6 +64,7 @@ func _physics_process(delta: float) -> void:
 	var light_source := _find_nearest_light_source()
 	if light_source == null:
 		_ray.enabled = false
+		_set_target_available(false)
 		return
 
 	_ray.enabled = true
@@ -92,6 +104,15 @@ func _physics_process(delta: float) -> void:
 	else:
 		_current_target = null
 		print("[LightReflector] Ray active. Target hit: none")
+
+	_set_target_available(_current_target != null)
+
+
+## Emit reflect_target_changed only on edges (target gained / lost).
+func _set_target_available(available: bool) -> void:
+	if available != _target_available_emitted:
+		_target_available_emitted = available
+		reflect_target_changed.emit(available)
 
 
 func _on_form_changed(new_profile: MaterialProfile) -> void:

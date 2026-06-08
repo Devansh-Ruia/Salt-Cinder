@@ -26,6 +26,7 @@ GameState="*res://scripts/core/game_state.gd"
 RoomManager="*res://scripts/core/room_manager.gd"
 MusicDirector="*res://scripts/core/music_director.gd"
 DebugSequenceTracker="*res://scripts/core/debug_sequence_tracker.gd"
+TeachingDirector="*res://scripts/ui/teaching_director.gd"
 
 [display]
 

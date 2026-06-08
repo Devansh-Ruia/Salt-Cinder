@@ -34,14 +34,14 @@ func _ready() -> void:
 func _create_prompt_indicator() -> void:
 	# TODO: replace with a proper UI scene/texture
 	_prompt_indicator = Label.new()
-	_prompt_indicator.text = "[E] Absorb"
+	_prompt_indicator.text = "[Q] Absorb"
 	_prompt_indicator.visible = false
 	_prompt_indicator.add_theme_font_size_override("font_size", 12)
 	add_child(_prompt_indicator)
 	_prompt_indicator.position = Vector2(0, -40)
 
 
-## Called by EmbeController when the player presses interact while in range.
+## Called by EmbeController when the player presses absorb_release (Q) while in range.
 func try_absorb(entity: Node) -> void:
 	if is_depleted:
 		return

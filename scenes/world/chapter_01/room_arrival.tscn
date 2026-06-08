@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://bqoleq4xi0ac1" path="res://scripts/components/door_trigger.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://4q335xxs2p" path="res://icon.svg" id="1_47nsp"]
-[ext_resource type="PackedScene" uid="uid://bjobf1ixhsvuj" path="res://scenes/entities/embe/embe.tscn" id="2_kbhdu"]
 [ext_resource type="Script" uid="uid://ctwjlak76j6w6" path="res://scripts/components/absorbable_object.gd" id="3_hsw0s"]
 [ext_resource type="Resource" path="res://resources/materials/driftwood.tres" id="4_0kpwh"]
 [ext_resource type="Script" path="res://scripts/components/water_zone.gd" id="5_waterzone"]
@@ -152,9 +151,6 @@ size = Vector2(60, 61.5)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_waterzone"]
 size = Vector2(80, 40)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_basaltobstacle"]
-size = Vector2(40, 60)
-
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_completiontrigger"]
 size = Vector2(32, 32)
 
@@ -184,10 +180,6 @@ z_index = 1
 
 [node name="Entities" type="Node2D" parent="." unique_id=675209239]
 y_sort_enabled = true
-
-[node name="Embe" parent="Entities" unique_id=909882338 instance=ExtResource("2_kbhdu")]
-position = Vector2(46, -30)
-scale = Vector2(0.5, 0.5)
 
 [node name="Driftwoodlog" type="Node2D" parent="Entities" unique_id=1602450672]
 
@@ -224,15 +216,6 @@ collision_mask = 2
 
 [node name="WaterZoneShape" type="CollisionShape2D" parent="WaterZone" unique_id=1274222406]
 shape = SubResource("RectangleShape2D_waterzone")
-
-[node name="BasaltObstacle" type="Area2D" parent="." unique_id=1274222407]
-script = ExtResource("1")
-position = Vector2(180, -20)
-collision_layer = 1
-collision_mask = 2
-
-[node name="BasaltObstacleShape" type="CollisionShape2D" parent="BasaltObstacle" unique_id=1274222408]
-shape = SubResource("RectangleShape2D_basaltobstacle")
 
 [node name="CompletionTrigger" type="Area2D" parent="." unique_id=1274222409]
 script = ExtResource("6_completiontrigger")

@@ -13,11 +13,10 @@ var _room_registry: Dictionary = {}
 ## Reference to the currently loaded room scene instance.
 var _current_room: Node = null
 
-## The single persistent Embe. Embe is embedded in the start room's scene; on
-## the first transition it is reparented to the scene root so freeing a room
-## never frees Embe. Re-instanced rooms that embed their own Embe have that
-## duplicate stripped (see _consolidate_embe). Guarantees exactly one node in
-## the "embe" group across all transitions.
+## The single persistent Embe. Embe is owned by the bootstrap (Main) scene, not
+## by any room. On the first transition RoomManager adopts it and reparents it to
+## the scene root, so freeing/re-instancing a room never frees or duplicates it.
+## Rooms contain no Embe of their own, so there is nothing to strip.
 var _embe: Node = null
 
 ## Guards change_room against re-entry. The fade uses await (~0.3s each way);
@@ -73,24 +72,28 @@ func change_room(room_name: String, entry_door_id: String) -> void:
 		print("[RoomManager] Transition already in progress, ignoring → ", room_name)
 		return
 
-	print("[RoomManager] Changing room → ", room_name, " | Entry door: ", entry_door_id)
-	if not _room_registry.has(room_name):
-		push_error("RoomManager: room '%s' not found in registry." % room_name)
+	# Validate the target before doing anything. An empty or unregistered name
+	# means a misconfigured door (unset target_room) or a typo — fail loud and
+	# return rather than silently no-op (a silent no-op hid exactly this bug).
+	if room_name.is_empty() or not _room_registry.has(room_name):
+		push_error("[RoomManager] ERROR: unknown/empty room name '%s' — ignoring" % room_name)
 		return
+
+	print("[RoomManager] Changing room → ", room_name, " | Entry door: ", entry_door_id)
 
 	_is_transitioning = true
 
-	# The start room is loaded by Godot as the main scene, not via change_room,
-	# so it is never registered as _current_room. Capture it now so it (and the
-	# Embe embedded in it) is handled like any other room from here on.
+	# The bootstrap (Main) scene is loaded by Godot as the main scene, not via
+	# change_room, so it is never registered as _current_room. Capture it now so
+	# it (and the Embe it owns) is freed/handled like any other scene from here on.
 	if _current_room == null:
 		_current_room = get_tree().current_scene
 
 	var scene_path: String = _room_registry[room_name]
 
-	# Move Embe out of the room being unloaded so the queue_free below cannot
-	# free it. After this, exactly one Embe exists, parented to the scene root.
-	_consolidate_embe()
+	# Adopt Embe (from the bootstrap scene on first call) and reparent it to the
+	# scene root so the queue_free below cannot take it with the old room/scene.
+	_adopt_embe()
 
 	# Fade to black
 	var tween := create_tween()
@@ -112,9 +115,9 @@ func change_room(room_name: String, entry_door_id: String) -> void:
 	_current_room = packed_scene.instantiate()
 	get_tree().root.add_child(_current_room)
 
-	# A re-instanced room may embed its own Embe (the start room does). Strip any
-	# such duplicate so only the persistent Embe remains in the "embe" group.
-	_consolidate_embe()
+	# Safety: keep the persistent Embe parented to the root. Rooms no longer embed
+	# an Embe, so this never finds a duplicate — it only re-asserts ownership.
+	_adopt_embe()
 
 	# Position Embe at the target door (and disarm that door against the spawn
 	# overlap so it does not immediately transition back).
@@ -133,28 +136,22 @@ func change_room(room_name: String, entry_door_id: String) -> void:
 	print("[RoomManager] Room loaded: ", room_name)
 
 
-## Ensure exactly one Embe exists and that it lives at the scene root (not inside
-## a room), so room frees never free it and re-instanced rooms cannot duplicate
-## it. Keeps the already-tracked persistent Embe if valid, else adopts the first
-## one found; frees any others.
-func _consolidate_embe() -> void:
-	var embes := get_tree().get_nodes_in_group("embe")
-	if embes.is_empty():
-		return
+## Adopt the persistent Embe and keep it parented to the scene root (not inside a
+## room or the bootstrap scene), so freeing a room never frees Embe. On the first
+## call it adopts the Embe owned by the bootstrap (Main) scene; thereafter it just
+## re-asserts that the tracked instance lives at the root. Rooms embed no Embe of
+## their own, so there is never a duplicate to remove.
+func _adopt_embe() -> void:
+	if _embe == null or not is_instance_valid(_embe):
+		var embes := get_tree().get_nodes_in_group("embe")
+		if embes.is_empty():
+			return
+		_embe = embes[0]
 
-	var keep: Node = _embe if (_embe != null and is_instance_valid(_embe)) else embes[0]
-
-	for e in embes:
-		if e != keep:
-			print("[RoomManager] Stripping duplicate Embe instanced by room.")
-			e.queue_free()
-
-	_embe = keep
-
-	# Reparent to the scene root so unloading a room cannot take Embe with it.
+	# Reparent to the scene root so unloading a room/scene cannot take Embe with it.
 	var root := get_tree().root
-	if keep.get_parent() != root:
-		keep.reparent(root)
+	if _embe.get_parent() != root:
+		_embe.reparent(root)
 
 
 ## Find the DoorTrigger with matching door_id in the room, place Embe there, and

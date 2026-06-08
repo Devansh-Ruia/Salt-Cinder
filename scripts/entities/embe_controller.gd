@@ -290,7 +290,7 @@ func _state_wall_sliding(profile: MaterialProfile) -> void:
 		return
 
 
-## WALL_CLIMBING — can_wall_climb forms (coral, basalt). Full vertical movement.
+## WALL_CLIMBING — can_wall_climb forms (coral only). Full vertical movement.
 ## Horizontal input maps to vertical movement on the wall. Jump to wall-kick.
 func _state_wall_climbing(profile: MaterialProfile) -> void:
 	var h := _get_horizontal_input()

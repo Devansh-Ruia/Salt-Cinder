@@ -84,17 +84,21 @@ func _build_layer() -> void:
 	_layer.add_child(_glyphs)
 
 	# Control glyphs (placeholder keycaps / symbols — art gate TODO).
-	_absorb_glyph = _make_glyph("Q", "taught_absorb", Vector2(0, -52))
-	_release_glyph = _make_glyph("Q", "taught_release", Vector2(0, -86))
-	_move_glyph = _make_glyph("< >", "taught_jump", Vector2(-30, -52))
-	_jump_glyph = _make_glyph("^", "taught_jump", Vector2(30, -52))
+	# Key labels resolve from the live InputMap so they can never drift from the
+	# actual bindings. Move teaches the WASD scheme (A / D); jump teaches Space —
+	# a side-on platformer has no real "up", so no up-glyph is shown.
+	_absorb_glyph = _make_glyph(_action_symbol("absorb_release"), "taught_absorb", Vector2(0, -52))
+	_release_glyph = _make_glyph(_action_symbol("absorb_release"), "taught_release", Vector2(0, -86))
+	var move_label: String = "%s / %s" % [_action_symbol("move_left"), _action_symbol("move_right")]
+	_move_glyph = _make_glyph(move_label, "taught_jump", Vector2(-30, -52))
+	_jump_glyph = _make_glyph(_action_symbol("jump"), "taught_jump", Vector2(30, -52))
 	# Affordance glyphs (symbols, gated on MaterialProfile flags — art gate TODO).
 	_climb_glyph = _make_glyph("=", "", Vector2(0, -60))
 	_float_glyph = _make_glyph("~", "", Vector2(0, -60))
 	_reflect_glyph = _make_glyph("*", "", Vector2(0, -60))
 	# Objective + lore glyphs.
 	_objective_glyph = _make_glyph("o", "", Vector2(0, -48))
-	_lore_glyph = _make_glyph("E", "", Vector2(0, -48))
+	_lore_glyph = _make_glyph(_action_symbol("interact"), "", Vector2(0, -48))
 
 
 func _make_glyph(label: String, flag: String, offset: Vector2) -> PromptGlyph:
@@ -105,6 +109,30 @@ func _make_glyph(label: String, flag: String, offset: Vector2) -> PromptGlyph:
 	g.world_offset = offset
 	_glyphs.add_child(g)
 	return g
+
+
+## Resolve an input action's PRIMARY bound key to a short display symbol, read
+## live from the InputMap so glyph labels can never drift from the real bindings.
+## Returns the first InputEventKey's human label (e.g. "A", "D", "Space", "Q").
+## # TODO: art gate — real key-cap icons will replace these text placeholders.
+func _action_symbol(action: StringName) -> String:
+	if not InputMap.has_action(action):
+		return "?"
+	for event in InputMap.action_get_events(action):
+		var key_event: InputEventKey = event as InputEventKey
+		if key_event == null:
+			continue
+		# Prefer the physical keycode (layout-independent); map it back to a
+		# logical keycode for a readable name. Fall back to the logical keycode.
+		var code: int = key_event.physical_keycode
+		if code != 0:
+			code = DisplayServer.keyboard_get_keycode_from_physical(code)
+		else:
+			code = key_event.keycode
+		if code == 0:
+			continue
+		return OS.get_keycode_string(code)
+	return "?"
 
 
 # ── Embe / per-room binding ──────────────────────────────

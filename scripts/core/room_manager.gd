@@ -31,6 +31,11 @@ var _fade_overlay: ColorRect = null
 ## Duration of each fade direction (in, out) in seconds.
 const FADE_DURATION: float = 0.3
 
+## Embe scene, instanced only by the debug-run fallback (see
+## spawn_debug_player_if_absent). The shipping path never uses this — bootstrap
+## owns the one real Embe.
+const EMBE_SCENE: PackedScene = preload("res://scenes/entities/embe/embe.tscn")
+
 
 func _ready() -> void:
 	_setup_fade_overlay()
@@ -167,6 +172,38 @@ func _adopt_embe() -> void:
 		# Embe still lives under its old parent (the bootstrap scene on first boot).
 		# Move it to the root in one step; reparent keeps global transform.
 		_embe.reparent(root)
+
+
+## Debug-only fallback for running a room scene directly (F5 on the room). When
+## the bootstrap never ran, no persistent Embe exists, so this instances one and
+## places it at the room's entry door — making the room immediately playable in
+## isolation without walking the whole chapter to reach it.
+##
+## Discriminator: presence of a node in the "embe" group when the room finishes
+## loading. Loaded normally through change_room, bootstrap's Embe is already
+## adopted and in that group → this is a no-op. Run directly, the group is empty
+## → spawn. Guarded on OS.is_debug_build() so it can never fire in an export
+## build. Rooms call this DEFERRED from _ready (the tree is locked during _ready,
+## same lifecycle rule as the bootstrap fix), passing their own entry door id.
+func spawn_debug_player_if_absent(room: Node, entry_door_id: String) -> void:
+	if not OS.is_debug_build():
+		return
+	# A persistent Embe already in the tree means we were loaded normally — leave
+	# the shipping path completely untouched (no second Embe, no interference).
+	if not get_tree().get_nodes_in_group("embe").is_empty():
+		return
+	if room == null or not is_instance_valid(room):
+		return
+
+	print("[RoomManager] DEBUG: no persistent Embe found — spawning fallback player for direct-run testing.")
+
+	var embe: Node = EMBE_SCENE.instantiate()
+	# Deferred call site means the tree is already unlocked, so add_child is safe.
+	room.add_child(embe)
+	_embe = embe
+	# Reuse the exact spawn + door-disarm path a real transition uses, so position
+	# and door re-arm behave identically to arriving here through change_room.
+	_place_embe_at_door(room, entry_door_id)
 
 
 ## Find the DoorTrigger with matching door_id in the room, place Embe there, and

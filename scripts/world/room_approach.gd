@@ -20,11 +20,23 @@ extends Node2D
 ## corridor stays a replayable practice space.
 @onready var _entities: Node2D = $Entities
 
+## Debug-only: spawn a test player if this room is run directly (F5). On the
+## normal bootstrap path a persistent Embe already exists, so it is a no-op.
+## Toggle off in-editor to inspect the room without a player.
+@export var debug_spawn: bool = true
+
+## DoorTrigger door_id the debug player spawns at (the room's entry from Arrival).
+@export var debug_spawn_door: String = "from_arrival"
+
 
 func _ready() -> void:
 	assert(_entities != null, "RoomApproach: 'Entities' container node is required.")
 	_reset_absorbables()
 	print("[RoomApproach] Ready. Corridor between Arrival and Foundry.")
+
+	# Deferred: the tree is locked during _ready; the fallback reparents/spawns.
+	if debug_spawn:
+		RoomManager.spawn_debug_player_if_absent.call_deferred(self, debug_spawn_door)
 
 
 ## Re-arm every AbsorbableObject in the room so each form can be practised

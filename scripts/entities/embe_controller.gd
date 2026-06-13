@@ -74,6 +74,13 @@ enum State {
 ## How long the landing state holds before transitioning.
 const LANDING_DURATION: float = 0.15
 
+## How long ABSORBING holds before returning to normal movement. This drives a
+## deterministic, asset-independent exit: the state must NOT wait on an animation
+## (frames/AnimationPlayer are the stubbed art gate) nor on the form_changed
+## signal (which never fires when re-absorbing the current/default form — that
+## was the freeze bug).
+const ABSORB_DURATION: float = 0.3
+
 ## Gravity (pixels/sec²). Scaled by MaterialProfile.gravity_scale.
 const BASE_GRAVITY: float = 980.0
 
@@ -91,6 +98,7 @@ const WALL_SLIDE_GRAVITY_SCALE: float = 0.4
 
 var _state: State = State.IDLE
 var _landing_timer: float = 0.0
+var _absorb_timer: float = 0.0
 var _input_frozen: bool = false
 var _in_water: bool = false
 
@@ -188,7 +196,7 @@ func _handle_state(delta: float, profile: MaterialProfile) -> void:
 		State.LANDING:
 			_state_landing(delta)
 		State.ABSORBING:
-			pass  # Locked until animation completes
+			_state_absorbing(delta)
 		State.FLOATING:
 			_state_floating(profile)
 		State.WALL_SLIDING:
@@ -279,6 +287,26 @@ func _state_landing(delta: float) -> void:
 	_landing_timer -= delta
 	if _landing_timer <= 0.0:
 		_transition_to(State.IDLE)
+
+
+## ABSORBING — a brief, self-terminating lock while a form is taken on. Held
+## stationary for ABSORB_DURATION, then exits deterministically regardless of
+## whether any animation played or form_changed fired. Absorption is grounded-
+## only, so exit normally lands in IDLE/RUNNING; FALLING is a safety net if the
+## floor vanished mid-absorb.
+func _state_absorbing(delta: float) -> void:
+	velocity.x = 0.0
+	_absorb_timer -= delta
+	if _absorb_timer > 0.0:
+		return
+
+	if not is_on_floor():
+		_transition_to(State.FALLING)
+	elif _get_horizontal_input() != 0.0:
+		_transition_to(State.RUNNING)
+	else:
+		_transition_to(State.IDLE)
+	print("[Embe] ABSORBING → ", State.keys()[_state], " (absorb complete)")
 
 
 func _state_floating(profile: MaterialProfile) -> void:
@@ -377,6 +405,7 @@ func _check_absorb_input() -> void:
 		if absorption.is_transformed():
 			absorption.release()
 		elif _nearby_absorbable and _nearby_absorbable.has_method("try_absorb"):
+			_absorb_timer = ABSORB_DURATION
 			_transition_to(State.ABSORBING)
 			_nearby_absorbable.try_absorb(self)
 
@@ -417,9 +446,10 @@ func _update_animation(profile: MaterialProfile) -> void:
 
 ## Called when AbsorptionComponent changes the active form.
 func _on_form_changed(_new_profile: MaterialProfile) -> void:
-	# If we were absorbing, return to idle
-	if _state == State.ABSORBING:
-		_transition_to(State.IDLE)
+	# Exit from ABSORBING is now owned by the fixed timer in _state_absorbing.
+	# This signal must NOT gate the exit: form_changed never fires when re-
+	# absorbing the current (default) form, which is what left Embe frozen.
+	pass
 
 
 ## Called by dialogue system or cutscenes to freeze/unfreeze input.

@@ -137,9 +137,13 @@ offset_bottom = -10
 text = "UPPER PLATFORM"
 horizontal_alignment = 1
 
-;; Mid platform near wall (reachable from driftwood float, holds coral)
+;; Mid platform near wall (reachable from driftwood float, holds coral).
+;; Top edge sits at the WaterZone surface (y=620) and the platform's left edge
+;; meets the pool's right edge (x=900), so floating up the open water column
+;; deposits Embe level with the ledge — then steer onto it. See WaterZone
+;; (x[400,900], y[620,820]) and embe collision half-height 63.
 [node name="MidPlatformBody" type="StaticBody2D" parent="Terrain"]
-position = Vector2(950, 620)
+position = Vector2(1000, 630)
 collision_layer = 1
 
 [node name="MidPlatformShape" type="CollisionShape2D" parent="Terrain/MidPlatformBody"]
@@ -240,8 +244,9 @@ text = "DRIFTWOOD"
 horizontal_alignment = 1
 
 ;; ── SECTION 2 — AbsorbableObject (coral) on mid-wall ──
+;; Rests on the relocated mid ledge (top y=620), just left of the climb wall.
 [node name="CoralObject" type="Area2D" parent="PuzzleElements"]
-position = Vector2(980, 600)
+position = Vector2(950, 605)
 collision_layer = 4
 collision_mask = 2
 script = ExtResource("3_absorb")

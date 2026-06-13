@@ -148,9 +148,24 @@ func _adopt_embe() -> void:
 			return
 		_embe = embes[0]
 
-	# Reparent to the scene root so unloading a room/scene cannot take Embe with it.
+	# Keep Embe parented to the scene root so unloading a room/scene cannot take it
+	# with them. Parent-aware and idempotent: safe to call any number of times.
 	var root := get_tree().root
-	if _embe.get_parent() != root:
+	var parent := _embe.get_parent()
+
+	if parent == root:
+		# Already adopted — nothing to do. This is the steady-state of the :120
+		# re-assertion call once the first :96 adopt has run.
+		return
+
+	if parent == null:
+		# Embe is detached (its previous parent was freed, or it was never parented).
+		# A blind reparent() would fail with "Node needs a parent to be reparented",
+		# so add it directly instead.
+		root.add_child(_embe)
+	else:
+		# Embe still lives under its old parent (the bootstrap scene on first boot).
+		# Move it to the root in one step; reparent keeps global transform.
 		_embe.reparent(root)
 
 

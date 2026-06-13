@@ -16,4 +16,9 @@ func _ready() -> void:
 	# Children run _ready before their parent, so the embedded Embe has already
 	# added itself to the "embe" group by the time this runs. RoomManager then
 	# adopts it during the transition.
-	RoomManager.change_room(first_room, first_entry_door)
+	#
+	# Defer the first transition: while _ready runs, this node is still inside its
+	# setup window and Godot locks the tree (data.blocked > 0). _adopt_embe mutates
+	# the tree (add_child/reparent of Embe), which fails on a locked tree. Running
+	# change_room one idle frame later, after the lock clears, lets the adopt succeed.
+	RoomManager.change_room.call_deferred(first_room, first_entry_door)

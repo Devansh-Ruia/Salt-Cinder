@@ -1,0 +1,42 @@
+# Salt & Cinder Godot MCP
+
+`salt_cinder_godot` is a project-local Codex MCP server for repeatable Godot inspection and limited runtime validation. It exists because Salt & Cinder has project-specific rules that generic file search misses: the wrapper repository is not the game repository, Embe is bootstrapped persistently, rooms are registered through `RoomManager`, forms are `MaterialProfile` resources, and Chapter 1 teaching depends on runtime signals.
+
+## Nested Repo Warning
+
+Run and configure this MCP from `new-game-project/`, not from the wrapper `Salt&Cinder/` directory. The Codex config is intentionally stored at `new-game-project/.codex/config.toml`.
+
+## Tool List
+
+- Project and convention inspection: `project_summary`, `agents_digest`, `inspect_project_godot`
+- Static Godot inspection: `inspect_scene`, `inspect_material_profiles`, `inspect_room_registry`, `inspect_inputs`, `inspect_physics_layers`
+- Architecture checks: `inspect_bootstrap_integrity`, `inspect_teaching_route`
+- Logs and runtime validation: `parse_godot_log`, `list_recent_runtime_logs`, `godot_version`, `godot_check_script`, `godot_run_chapter_01`, `godot_run_scene`
+- Repository status: `git_status`
+
+## Safety Model
+
+The server is not a gameplay editing layer. Inspection tools read only inside `new-game-project/`. Runtime tools use local subprocess calls and may write logs only under `logs/mcp/`. The server never deletes files, commits changes, edits scenes, edits scripts, changes physics layers, or rewrites resources.
+
+Godot runtime tools require prompt approval in `.codex/config.toml` because they run local commands.
+
+## Codex Loading
+
+Codex loads the MCP from `new-game-project/.codex/config.toml`:
+
+```toml
+[mcp_servers.salt_cinder_godot]
+command = "uv"
+args = ["run", "--with", "mcp[cli]", "python", "tools/mcp/salt_cinder_godot_mcp.py"]
+cwd = "."
+```
+
+If Codex MCP status tooling is available, use it from `new-game-project/` to confirm that `salt_cinder_godot` is visible. With MCP Inspector, point the command at the same `uv run --with mcp[cli] python tools/mcp/salt_cinder_godot_mcp.py` startup command.
+
+## Godot Validation
+
+Use `godot_version` first to confirm the Godot binary is available. Use `godot_check_script` for a focused syntax check, for example `scripts/entities/embe_controller.gd`. Use `godot_run_chapter_01` or `godot_run_scene` only after approval; both stop after a timeout and store output in `logs/mcp/`.
+
+## Known Limitations
+
+Static scene analysis cannot prove puzzle comprehension, camera framing, or runtime signal timing. Godot `.tscn` parsing is text-based and intentionally conservative. The runtime tools depend on a working local Godot binary on `PATH` or a supplied executable path.

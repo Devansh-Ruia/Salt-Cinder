@@ -1,0 +1,46 @@
+[mcp_servers.salt_cinder_godot]
+command = "uv"
+args = [
+  "run",
+  "--with",
+  "mcp[cli]",
+  "python",
+  "tools/mcp/salt_cinder_godot_mcp.py"
+]
+cwd = "."
+startup_timeout_sec = 10
+tool_timeout_sec = 90
+required = true
+default_tools_approval_mode = "auto"
+
+enabled_tools = [
+  "project_summary",
+  "agents_digest",
+  "inspect_project_godot",
+  "inspect_scene",
+  "inspect_material_profiles",
+  "inspect_room_registry",
+  "inspect_inputs",
+  "inspect_physics_layers",
+  "inspect_bootstrap_integrity",
+  "inspect_teaching_route",
+  "parse_godot_log",
+  "list_recent_runtime_logs",
+  "git_status",
+  "godot_version",
+  "godot_check_script",
+  "godot_run_chapter_01",
+  "godot_run_scene"
+]
+
+[mcp_servers.salt_cinder_godot.tools.godot_version]
+approval_mode = "prompt"
+
+[mcp_servers.salt_cinder_godot.tools.godot_check_script]
+approval_mode = "prompt"
+
+[mcp_servers.salt_cinder_godot.tools.godot_run_chapter_01]
+approval_mode = "prompt"
+
+[mcp_servers.salt_cinder_godot.tools.godot_run_scene]
+approval_mode = "prompt"

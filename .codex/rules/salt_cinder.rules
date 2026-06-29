@@ -1,0 +1,215 @@
+# Salt & Cinder project-local command policy.
+# Keep this conservative: read-only inspection may run, runtime/dependency
+# commands prompt, and destructive git/filesystem commands are forbidden.
+
+# Safe read-only git inspection.
+prefix_rule(
+    pattern = ["git", "status"],
+    match = ["git status --short", "git status --short --untracked-files=all"],
+    not_match = ["git reset --hard"],
+    justification = "Allow read-only repository status checks in the nested game repo.",
+)
+
+prefix_rule(
+    pattern = ["git", "diff"],
+    match = ["git diff", "git diff -- .codex/rules/salt_cinder.rules"],
+    not_match = ["git reset --hard"],
+    justification = "Allow read-only diff inspection before reporting changes.",
+)
+
+prefix_rule(
+    pattern = ["git", "log"],
+    match = ["git log --oneline -5"],
+    justification = "Allow read-only commit history inspection.",
+)
+
+prefix_rule(
+    pattern = ["git", "rev-parse"],
+    match = ["git rev-parse --show-toplevel"],
+    justification = "Allow read-only confirmation of the nested repository root.",
+)
+
+prefix_rule(
+    pattern = ["git", "ls-files"],
+    match = ["git ls-files -- .codex/config.toml"],
+    justification = "Allow read-only checks for whether project files are tracked.",
+)
+
+prefix_rule(
+    pattern = ["git", "check-ignore"],
+    match = ["git check-ignore -v .codex/config.toml"],
+    justification = "Allow read-only checks for ignore-rule visibility.",
+)
+
+# Safe syntax/version checks.
+prefix_rule(
+    pattern = ["godot", "--version"],
+    match = ["godot --version"],
+    not_match = ["godot --path . res://scenes/world/chapter_01/room_arrival.tscn"],
+    justification = "Allow checking whether the local Godot binary is available.",
+)
+
+prefix_rule(
+    pattern = ["godot", "--headless", "--check-only"],
+    match = ["godot --headless --check-only --script scripts/entities/embe_controller.gd"],
+    not_match = ["godot --path . res://scenes/world/chapter_01/room_arrival.tscn"],
+    justification = "Allow Godot headless syntax checks without booting gameplay scenes.",
+)
+
+prefix_rule(
+    pattern = ["python", "-m", "py_compile"],
+    match = ["python -m py_compile tools/mcp/salt_cinder_godot_mcp.py"],
+    justification = "Allow Python syntax checks for project-local MCP tooling.",
+)
+
+# Prompt before git operations that change index, refs, branch state, or files.
+prefix_rule(
+    pattern = ["git", "add"],
+    match = ["git add .codex/rules/salt_cinder.rules"],
+    justification = "Prompt before staging files.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "commit"],
+    match = ["git commit -m \"example\""],
+    justification = "Prompt before creating commits.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "restore"],
+    match = ["git restore .codex/rules/salt_cinder.rules"],
+    justification = "Prompt before restoring files from git.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "checkout"],
+    match = ["git checkout main"],
+    justification = "Prompt before checkout because it can change files or branches.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "switch"],
+    match = ["git switch main"],
+    justification = "Prompt before switching branches.",
+    decision = "prompt",
+)
+
+# Prompt before runtime boots, dependency/network commands, and shell wrappers.
+prefix_rule(
+    pattern = ["godot", "--path"],
+    match = ["godot --path . res://scenes/world/chapter_01/room_arrival.tscn"],
+    not_match = ["godot --version"],
+    justification = "Prompt before booting Godot runtime scenes.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["uv", "run", "--with", "mcp[cli]"],
+    match = ["uv run --with mcp[cli] python tools/mcp/salt_cinder_godot_mcp.py"],
+    justification = "Prompt before uv runs that may use package caches or dependency resolution.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["uv"],
+    match = ["uv pip install mcp"],
+    justification = "Prompt before uv dependency or network-capable commands.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["npm"],
+    match = ["npm install"],
+    justification = "Prompt before npm dependency or network-capable commands.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["npx"],
+    match = ["npx ctx7@latest library Godot question"],
+    justification = "Prompt before npx commands because they may download packages or access the network.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["pip"],
+    match = ["pip install mcp"],
+    justification = "Prompt before pip dependency or network-capable commands.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["python", "-m", "pip"],
+    match = ["python -m pip install mcp"],
+    not_match = ["python -m py_compile tools/mcp/salt_cinder_godot_mcp.py"],
+    justification = "Prompt before Python pip dependency or network-capable commands.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["powershell"],
+    match = ["powershell -Command Get-Location"],
+    justification = "Prompt before PowerShell wrapper commands; matching is limited to direct executable prefixes.",
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["pwsh"],
+    match = ["pwsh -Command Get-Location"],
+    justification = "Prompt before PowerShell wrapper commands; matching is limited to direct executable prefixes.",
+    decision = "prompt",
+)
+
+# Forbid destructive git and filesystem commands.
+prefix_rule(
+    pattern = ["git", "reset"],
+    match = ["git reset --hard"],
+    justification = "Forbid git reset because it can discard local work.",
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "clean"],
+    match = ["git clean -fd"],
+    justification = "Forbid git clean because it deletes untracked files.",
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "push"],
+    match = ["git push"],
+    justification = "Forbid pushing from this local project policy.",
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["rm"],
+    match = ["rm -rf tools/mcp"],
+    justification = "Forbid rm because it deletes files.",
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["rmdir"],
+    match = ["rmdir logs"],
+    justification = "Forbid rmdir because it deletes directories.",
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["del"],
+    match = ["del .codex\\config.toml"],
+    justification = "Forbid del because it deletes files.",
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["Remove-Item"],
+    match = ["Remove-Item -LiteralPath .codex\\config.toml -Force"],
+    justification = "Forbid Remove-Item because it deletes files.",
+    decision = "forbidden",
+)

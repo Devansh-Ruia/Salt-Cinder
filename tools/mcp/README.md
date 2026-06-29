@@ -4,7 +4,7 @@
 
 ## Nested Repo Warning
 
-The game repository is `C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project`, not the wrapper `Salt&Cinder/` directory. Active Codex MCP config now lives at `C:/Users/super/.codex/config.toml`, and active command rules live at `C:/Users/super/.codex/rules/salt_cinder.rules`. Project-local `.codex/config.toml` and `.codex/rules/` are intentionally not used.
+The game repository is `C:/Users/super/Desktop/Desktop/saltandcinder/new-game-project`, not the wrapper `saltandcinder/` directory. Active Codex MCP config now lives at `C:/Users/super/.codex/config.toml`, and active command rules live at `C:/Users/super/.codex/rules/salt_cinder.rules`. Project-local `.codex/config.toml` and `.codex/rules/` are intentionally not used.
 
 ## Tool List
 
@@ -32,15 +32,15 @@ args = [
   "--with",
   "mcp[cli]",
   "python",
-  "C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project/tools/mcp/salt_cinder_godot_mcp.py"
+  "C:/Users/super/Desktop/Desktop/saltandcinder/new-game-project/tools/mcp/salt_cinder_godot_mcp.py"
 ]
-cwd = "C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project"
+cwd = "C:/Users/super/Desktop/Desktop/saltandcinder/new-game-project"
 
 [mcp_servers.salt_cinder_godot.env]
-SALT_CINDER_PROJECT_ROOT = "C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project"
+SALT_CINDER_PROJECT_ROOT = "C:/Users/super/Desktop/Desktop/saltandcinder/new-game-project"
 ```
 
-If Codex MCP status tooling is available, run `codex mcp get salt_cinder_godot` to confirm that the server is visible and points at the repo script. With MCP Inspector, point the command at the same `uv run --with mcp[cli] python C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project/tools/mcp/salt_cinder_godot_mcp.py` startup command.
+If Codex MCP status tooling is available, run `codex mcp get salt_cinder_godot` to confirm that the server is visible and points at the repo script. With MCP Inspector, point the command at the same `uv run --with mcp[cli] python C:/Users/super/Desktop/Desktop/saltandcinder/new-game-project/tools/mcp/salt_cinder_godot_mcp.py` startup command.
 
 ## Godot Validation
 

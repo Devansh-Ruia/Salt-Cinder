@@ -425,8 +425,8 @@ def project_summary() -> dict[str, Any]:
     tests_files = [path for path in tests_path.rglob("*") if path.is_file()] if tests_path.exists() else []
     if not is_project:
         warnings.append("Project root does not look like new-game-project with project.godot.")
-    if wrapper_name != "saltcinder":
-        warnings.append("Wrapper parent name does not normalize to Salt&Cinder.")
+    if wrapper_name != "saltandcinder":
+        warnings.append("Wrapper parent name does not normalize to saltandcinder.")
     if not (PROJECT_ROOT / ".git").exists():
         warnings.append(".git directory not found inside new-game-project.")
     if not project["main_scene"]:
@@ -438,7 +438,7 @@ def project_summary() -> dict[str, Any]:
         "detected_current_working_directory": str(cwd),
         "project_root_path": str(PROJECT_ROOT),
         "appears_to_be_new_game_project": is_project,
-        "wrapper_parent_detected": wrapper_name == "saltcinder",
+        "wrapper_parent_detected": wrapper_name == "saltandcinder",
         "wrapper_parent_path": str(parent),
         "new_game_project_git_exists": (PROJECT_ROOT / ".git").exists(),
         "project_godot_path": _rel(PROJECT_ROOT / "project.godot"),

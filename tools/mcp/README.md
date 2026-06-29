@@ -1,10 +1,10 @@
 # Salt & Cinder Godot MCP
 
-`salt_cinder_godot` is a project-local Codex MCP server for repeatable Godot inspection and limited runtime validation. It exists because Salt & Cinder has project-specific rules that generic file search misses: the wrapper repository is not the game repository, Embe is bootstrapped persistently, rooms are registered through `RoomManager`, forms are `MaterialProfile` resources, and Chapter 1 teaching depends on runtime signals.
+`salt_cinder_godot` is a Salt & Cinder Codex MCP server for repeatable Godot inspection and limited runtime validation. The server source is tracked in this repo at `tools/mcp/salt_cinder_godot_mcp.py`. It exists because Salt & Cinder has project-specific rules that generic file search misses: the wrapper repository is not the game repository, Embe is bootstrapped persistently, rooms are registered through `RoomManager`, forms are `MaterialProfile` resources, and Chapter 1 teaching depends on runtime signals.
 
 ## Nested Repo Warning
 
-Run and configure this MCP from `new-game-project/`, not from the wrapper `Salt&Cinder/` directory. The Codex config is intentionally stored at `new-game-project/.codex/config.toml`.
+The game repository is `C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project`, not the wrapper `Salt&Cinder/` directory. Active Codex MCP config now lives at `C:/Users/super/.codex/config.toml`, and active command rules live at `C:/Users/super/.codex/rules/salt_cinder.rules`. Project-local `.codex/config.toml` and `.codex/rules/` are intentionally not used.
 
 ## Tool List
 
@@ -18,20 +18,29 @@ Run and configure this MCP from `new-game-project/`, not from the wrapper `Salt&
 
 The server is not a gameplay editing layer. Inspection tools read only inside `new-game-project/`. Runtime tools use local subprocess calls and may write logs only under `logs/mcp/`. The server never deletes files, commits changes, edits scenes, edits scripts, changes physics layers, or rewrites resources.
 
-Godot runtime tools require prompt approval in `.codex/config.toml` because they run local commands.
+Godot runtime tools require prompt approval in the user-level Codex config because they run local commands. The user-level config hard-binds the server to the Salt & Cinder project root with `cwd` and `SALT_CINDER_PROJECT_ROOT`; the repo-tracked script also resolves the same root when launched from `tools/mcp/`.
 
 ## Codex Loading
 
-Codex loads the MCP from `new-game-project/.codex/config.toml`:
+Codex loads the MCP from `C:/Users/super/.codex/config.toml`. The active server entry points directly to the repo-tracked source:
 
 ```toml
 [mcp_servers.salt_cinder_godot]
 command = "uv"
-args = ["run", "--with", "mcp[cli]", "python", "tools/mcp/salt_cinder_godot_mcp.py"]
-cwd = "."
+args = [
+  "run",
+  "--with",
+  "mcp[cli]",
+  "python",
+  "C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project/tools/mcp/salt_cinder_godot_mcp.py"
+]
+cwd = "C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project"
+
+[mcp_servers.salt_cinder_godot.env]
+SALT_CINDER_PROJECT_ROOT = "C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project"
 ```
 
-If Codex MCP status tooling is available, use it from `new-game-project/` to confirm that `salt_cinder_godot` is visible. With MCP Inspector, point the command at the same `uv run --with mcp[cli] python tools/mcp/salt_cinder_godot_mcp.py` startup command.
+If Codex MCP status tooling is available, run `codex mcp get salt_cinder_godot` to confirm that the server is visible and points at the repo script. With MCP Inspector, point the command at the same `uv run --with mcp[cli] python C:/Users/super/Downloads/Desktop/Salt&Cinder/new-game-project/tools/mcp/salt_cinder_godot_mcp.py` startup command.
 
 ## Godot Validation
 

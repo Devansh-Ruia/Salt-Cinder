@@ -14,6 +14,7 @@
 ##   3. Affordance — climb / float / reflect glyphs GATED ON THE ACTIVE
 ##                   MaterialProfile flags (can_wall_climb / can_float / light_reflective)
 ##                   plus proximity. Data-driven: a new form with a flag auto-participates.
+##   3b. Route      — Coral source + nearby wall cue for the first climb lesson.
 ##   4. Objective  — reflector-target glyph; FoundryGate already reads locked/unlocked
 ##                   by visual state (it vanishes on unlock), not text.
 ##   5. Lore       — [E] glyph over a LorePickup in range → existing LoreNotification.
@@ -26,6 +27,8 @@ extends Node
 const PROMPT_GLYPH_SCENE: PackedScene = preload("res://scenes/ui/prompt_glyph.tscn")
 const FORM_INDICATOR_SCENE: PackedScene = preload("res://scenes/ui/form_indicator.tscn")
 const LORE_NOTIFICATION_SCENE: PackedScene = preload("res://scenes/ui/lore_notification.tscn")
+const CORAL_ABSORB_FLAG: String = "taught_coral_absorb"
+const CORAL_CLIMB_FLAG: String = "taught_coral_climb"
 
 ## Rooms considered the "opening" where the move/jump glyphs may appear. Keeping
 ## these scoped to the opening stops them reappearing later in the game.
@@ -45,6 +48,8 @@ var _float_glyph: PromptGlyph = null
 var _reflect_glyph: PromptGlyph = null
 var _objective_glyph: PromptGlyph = null
 var _lore_glyph: PromptGlyph = null
+var _coral_absorb_glyph: PromptGlyph = null
+var _coral_wall_glyph: PromptGlyph = null
 
 # Tracked runtime state.
 var _embe: Node = null
@@ -55,6 +60,7 @@ var _nearby_lore: Node2D = null
 var _on_wall: bool = false
 var _in_water: bool = false
 var _reflect_available: bool = false
+var _climb_wall_target: Node2D = null
 
 
 func _ready() -> void:
@@ -96,6 +102,8 @@ func _build_layer() -> void:
 	_climb_glyph = _make_glyph("=", "", Vector2(0, -60))
 	_float_glyph = _make_glyph("~", "", Vector2(0, -60))
 	_reflect_glyph = _make_glyph("*", "", Vector2(0, -60))
+	_coral_absorb_glyph = _make_glyph("%s -> =" % _action_symbol("absorb_release"), CORAL_ABSORB_FLAG, Vector2(0, -86))
+	_coral_wall_glyph = _make_glyph("= ^", CORAL_CLIMB_FLAG, Vector2(0, -92))
 	# Objective + lore glyphs.
 	_objective_glyph = _make_glyph("o", "", Vector2(0, -48))
 	_lore_glyph = _make_glyph(_action_symbol("interact"), "", Vector2(0, -48))
@@ -185,6 +193,9 @@ func _on_room_loaded(room_name: String) -> void:
 	_absorb_glyph.hide_glyph()
 	_lore_glyph.hide_glyph()
 	_objective_glyph.hide_glyph()
+	_coral_absorb_glyph.hide_glyph()
+	_coral_wall_glyph.hide_glyph()
+	_climb_wall_target = get_tree().get_first_node_in_group("climb_wall_hint") as Node2D
 
 	_bind_embe()  # Embe persists; connections are guarded against duplicates.
 	_connect_room_signals()
@@ -227,6 +238,7 @@ func _refresh_affordances() -> void:
 	_set_glyph(_climb_glyph, _embe, p.can_wall_climb and _on_wall)
 	_set_glyph(_float_glyph, _embe, p.can_float and _in_water)
 	_set_glyph(_reflect_glyph, _embe, p.light_reflective and _reflect_available)
+	_refresh_coral_teaching(p)
 
 	# Objective glyph: mark the reflector target while a reflective form is held.
 	var targets: Array = get_tree().get_nodes_in_group("reflector_target")
@@ -235,6 +247,39 @@ func _refresh_affordances() -> void:
 		_objective_glyph.show_glyph()
 	else:
 		_objective_glyph.hide_glyph()
+
+
+func _refresh_coral_teaching(profile: MaterialProfile = null) -> void:
+	if _coral_absorb_glyph == null or _coral_wall_glyph == null:
+		return
+	var active_profile: MaterialProfile = profile
+	if active_profile == null and _absorption != null:
+		active_profile = _absorption.get_active_profile()
+
+	var near_coral_source: bool = _is_wall_climb_absorbable(_nearby_absorbable)
+	if near_coral_source and not GameState.has_flag(CORAL_ABSORB_FLAG):
+		var key_label: String = "%s -> =" % _action_symbol("absorb_release")
+		if _absorption != null and _absorption.is_transformed():
+			key_label = "%s %s -> =" % [_action_symbol("absorb_release"), _action_symbol("absorb_release")]
+		_coral_absorb_glyph.configure(key_label, null, CORAL_ABSORB_FLAG)
+		_set_glyph(_coral_absorb_glyph, _nearby_absorbable, true)
+	else:
+		_coral_absorb_glyph.hide_glyph()
+
+	var should_point_to_wall: bool = (
+		active_profile != null
+		and active_profile.can_wall_climb
+		and _climb_wall_target != null
+		and not GameState.has_flag(CORAL_CLIMB_FLAG)
+	)
+	_set_glyph(_coral_wall_glyph, _climb_wall_target, should_point_to_wall)
+
+
+func _is_wall_climb_absorbable(obj: Node) -> bool:
+	if obj == null:
+		return false
+	var profile: MaterialProfile = obj.get("material_profile") as MaterialProfile
+	return profile != null and profile.can_wall_climb
 
 
 func _set_glyph(g: PromptGlyph, target: Node, want: bool) -> void:
@@ -253,6 +298,8 @@ func _on_form_changed(_profile: MaterialProfile) -> void:
 	if _absorption != null and _absorption.is_transformed():
 		if not GameState.has_flag("taught_absorb"):
 			GameState.set_flag("taught_absorb")
+		if _profile != null and _profile.can_wall_climb and not GameState.has_flag(CORAL_ABSORB_FLAG):
+			GameState.set_flag(CORAL_ABSORB_FLAG)
 		_absorb_glyph.hide_glyph()  # absorbing while in range consumes the prompt
 	_refresh_controls()
 	_refresh_affordances()
@@ -267,6 +314,7 @@ func _on_form_released(_old_profile: MaterialProfile) -> void:
 
 func _on_absorbable_in_range(obj: Node) -> void:
 	_nearby_absorbable = obj as Node2D
+	_refresh_coral_teaching()
 	# [Q] absorb only matters when NOT transformed; when transformed Q releases
 	# (handled by the release glyph), so don't double up.
 	if _absorption != null and _absorption.is_transformed():
@@ -277,10 +325,15 @@ func _on_absorbable_in_range(obj: Node) -> void:
 func _on_absorbable_out_of_range() -> void:
 	_nearby_absorbable = null
 	_absorb_glyph.hide_glyph()
+	_coral_absorb_glyph.hide_glyph()
 
 
 func _on_wall_contact_changed(touching: bool) -> void:
 	_on_wall = touching
+	if touching and _absorption != null:
+		var profile: MaterialProfile = _absorption.get_active_profile()
+		if profile != null and profile.can_wall_climb and not GameState.has_flag(CORAL_CLIMB_FLAG):
+			GameState.set_flag(CORAL_CLIMB_FLAG)
 	_refresh_affordances()
 
 

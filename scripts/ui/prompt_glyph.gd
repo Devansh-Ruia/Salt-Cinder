@@ -71,6 +71,8 @@ func _apply_visual() -> void:
 	_icon.visible = has_icon
 	_key_label.visible = not has_icon
 	_key_label.text = key_label
+	var label_width: float = maxf(18.0, float(key_label.length()) * 10.0)
+	_key_label.custom_minimum_size = Vector2(label_width, 22.0)
 
 
 ## Reconfigure at runtime (key char, optional icon, optional retirement flag).

@@ -1,15 +1,23 @@
-## FormIndicator — Persistent, glyphs-only HUD readout of Embe's current form.
-## Bottom-left corner. Shows a colour swatch (placeholder) + a swappable icon
-## slot for the active MaterialProfile. NO TEXT — the swatch/icon is the whole
-## language. Updates on form_changed / form_released; stays visible at all times
-## (including default basalt) so the player can always read "what form am I".
+## FormIndicator — Persistent placeholder HUD readout of Embe's current form.
+## Bottom-left corner. Shows a colour swatch plus a readable symbol/short label
+## until final form icons exist. Updates on form_changed and stays visible at all
+## times (including default basalt) so the player can always read the active form.
 ##
-## ART GATE: the colour swatch is a placeholder. Assign per-form textures to the
-## `icon` slot to replace it. # TODO: art gate
+## ART GATE: assign per-form textures to `icon` later, then hide the text labels.
 extends Control
 
 @onready var icon: TextureRect = $Panel/HBox/Icon     # TODO: assign per-form form icons (art gate)
 @onready var swatch: ColorRect = $Panel/HBox/Swatch
+@onready var symbol_label: Label = $Panel/HBox/SymbolLabel
+@onready var form_label: Label = $Panel/HBox/FormLabel
+
+const FORM_READOUTS: Dictionary = {
+	"basalt": {"symbol": "[]", "label": "BASALT"},
+	"driftwood": {"symbol": "///", "label": "WOOD"},
+	"coral": {"symbol": "Y", "label": "CORAL"},
+	"seaglass": {"symbol": "<>", "label": "GLASS"},
+	"sea_glass": {"symbol": "<>", "label": "GLASS"},
+}
 
 
 func _ready() -> void:
@@ -43,6 +51,14 @@ func _apply_profile(profile: MaterialProfile) -> void:
 	if profile == null:
 		return
 	swatch.color = profile.ambient_color_modulate
+	var key: String = _profile_key(profile)
+	var readout: Dictionary = FORM_READOUTS[key] if FORM_READOUTS.has(key) else {"symbol": "?", "label": profile.material_name.to_upper()}
+	symbol_label.text = readout.get("symbol", "?")
+	form_label.text = readout.get("label", profile.material_name.to_upper())
 	# TODO (art gate): when a per-form icon texture exists, assign it to `icon`
-	# and hide the swatch — e.g. icon.texture = profile.form_icon; swatch.hide().
+	# and hide symbol_label/form_label.
 	visible = true
+
+
+func _profile_key(profile: MaterialProfile) -> String:
+	return profile.material_name.to_lower().replace(" ", "_")
